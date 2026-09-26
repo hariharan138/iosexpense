@@ -1,0 +1,1724 @@
+:root {
+  color-scheme: light;
+
+  /* Text */
+  --ink: #151922;          /* primary */
+  --label: #5b6068;        /* form labels */
+  --muted: #9a9da5;        /* secondary */
+  --soft: #c0c4ca;         /* placeholders, chevrons, disabled marks */
+
+  /* Surfaces, from furthest back to nearest front */
+  --paper: #f5f5f7;        /* the page */
+  --card: #ffffff;         /* raised card */
+  --subtle: #f4f5f7;       /* quiet fill inside a card */
+  --chip: #ebebef;         /* inactive chip / secondary button */
+  --field: #fafbfc;        /* input at rest */
+  --field-focus: #ffffff;  /* input while focused */
+  --line: #e3e5e9;         /* hairline */
+  --frame: #2f3640;        /* the mat the phone sits on, wide screens only */
+
+  /* Primary action. Inverts in dark: a charcoal button on a charcoal page
+     would disappear, so the pair moves together. */
+  --accent: #1c2128;
+  --on-accent: #ffffff;
+  /* Surfaces that are dark in BOTH themes (the hero card, the avatar disc),
+     so their text is white in both. */
+  --on-dark: #ffffff;
+  --hero-from: #2a3038;
+  --hero-to: #14181e;
+  --avatar-from: #2b323a;
+  --avatar-to: #6a747f;
+
+  /* Meaning. Kept in both themes -- green is income, amber is spend. */
+  --green: #22c55e;
+  --orange: #ffb02e;
+  --danger: #ef4444;
+  --amber-text: #f59e0b;
+  --ok-text: #2f9d63;
+  --err-text: #d64545;
+  --amber-ink: #9a6a00;
+  --red-ink: #c62828;
+  --tint-green: #e8faf0;
+  --tint-amber: #fff4e3;
+  --tint-red: #fdeaea;
+  /* Rotating pastel discs behind transaction icons */
+  --tint-1: #f6eef3;
+  --tint-2: #eef6ff;
+  --tint-3: #fff6e4;
+  --tint-4: #f3f0f8;
+
+  --backdrop: rgba(14, 18, 24, 0.5);
+  --shadow: 0 10px 28px rgba(28, 33, 40, 0.07);
+  --shadow-nav: 0 12px 30px rgba(20, 24, 30, 0.12), 0 3px 10px rgba(20, 24, 30, 0.06);
+  --shadow-lift: 0 12px 24px rgba(20, 24, 30, 0.28), 0 3px 8px rgba(20, 24, 30, 0.18);
+  --shadow-lift-active: 0 16px 30px rgba(20, 24, 30, 0.34), 0 4px 10px rgba(20, 24, 30, 0.2);
+  --shadow-hero: 0 22px 40px rgba(20, 24, 30, 0.28);
+  --shadow-modal: 0 24px 60px rgba(14, 18, 24, 0.4);
+  --shadow-frame: 0 30px 70px rgba(14, 18, 24, 0.35);
+
+  --nav-h: 72px;
+  /* Capacitor injects --safe-area-inset-* in the native shell (Android draws
+     edge-to-edge behind the status bar); env() covers the browser / iOS PWA. */
+  --safe-t: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --safe-b: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+}
+
+/* Dark. One block, not two, because the theme is always resolved to an
+   explicit data-theme by the boot script in index.html -- so this never has to
+   be repeated under a prefers-color-scheme media query. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --ink: #e9ecf1;
+  --label: #a6adb7;
+  --muted: #8b919b;
+  --soft: #626973;
+
+  --paper: #101317;
+  --card: #181c22;
+  --subtle: #1e232a;
+  --chip: #242a32;
+  --field: #1a1f25;
+  --field-focus: #1f252c;
+  --line: #2a313a;
+  --frame: #05070a;
+
+  --accent: #eef1f5;
+  --on-accent: #14181e;
+  /* --on-dark, --hero-*, --avatar-* deliberately unchanged: those surfaces
+     were always dark, and the hero still needs to sit above the page, which
+     is why it is lifted rather than darkened. */
+  --hero-from: #272e37;
+  --hero-to: #171b21;
+
+  --amber-text: #f5b544;
+  --ok-text: #4fd08a;
+  --err-text: #ff8080;
+  --amber-ink: #f3c67d;
+  --red-ink: #ff9b9b;
+  --tint-green: #143025;
+  --tint-amber: #382b14;
+  --tint-red: #3b1f1f;
+  --tint-1: #2c2430;
+  --tint-2: #1e2a38;
+  --tint-3: #322a1a;
+  --tint-4: #272334;
+
+  --backdrop: rgba(0, 0, 0, 0.66);
+  --shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+  --shadow-nav: 0 12px 30px rgba(0, 0, 0, 0.6), 0 3px 10px rgba(0, 0, 0, 0.4);
+  --shadow-lift: 0 12px 24px rgba(0, 0, 0, 0.6), 0 3px 8px rgba(0, 0, 0, 0.4);
+  --shadow-lift-active: 0 16px 30px rgba(0, 0, 0, 0.7), 0 4px 10px rgba(0, 0, 0, 0.45);
+  --shadow-hero: 0 22px 40px rgba(0, 0, 0, 0.55);
+  --shadow-modal: 0 24px 60px rgba(0, 0, 0, 0.7);
+  --shadow-frame: 0 30px 70px rgba(0, 0, 0, 0.6);
+}
+
+
+* { box-sizing: border-box; }
+
+html {
+  /* Paper by default so a phone (and the native shell, before the web view
+     paints) never flashes dark; the desktop frame colour is set at 700px. */
+  background: var(--paper);
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+}
+
+.app {
+  width: min(100%, 430px);
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: calc(28px + var(--safe-t)) 22px calc(var(--nav-h) + 36px + var(--safe-b));
+  background: var(--paper);
+}
+
+button, input, select, textarea {
+  font: inherit;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* 16px minimum stops iOS Safari from zooming inputs on focus */
+input, select, textarea {
+  font-size: 16px;
+}
+
+button { cursor: pointer; }
+h1, h2, p { margin: 0; }
+
+.tab-panel { display: none; animation: fadeIn .28s ease; }
+.tab-panel.active { display: block; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab-panel { animation: none; }
+}
+
+/* —— Header —— */
+.topbar, .section-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.eyebrow {
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+h1 {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.7px;
+  line-height: 1.15;
+}
+
+.sync-status, .page-sub {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.status-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--green);
+}
+
+.sync-status.err .status-dot { background: var(--danger); }
+.sync-status.muted .status-dot { background: var(--soft); }
+
+.page-head { margin-bottom: 22px; }
+
+
+.topbar-actions {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.dash-avatar {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin-top: 2px;
+  border: 0;
+  border-radius: 50%;
+  background: linear-gradient(145deg, var(--avatar-from), var(--avatar-to));
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  color: var(--on-dark);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.dash-avatar.has-photo {
+  background-color: var(--avatar-from);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* —— Hero card —— */
+.hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: 210px;
+  margin: 26px 0 28px;
+  padding: 26px 24px 22px;
+  border-radius: 28px;
+  background: linear-gradient(145deg, var(--hero-from) 0%, var(--hero-to) 100%);
+  color: var(--on-dark);
+  box-shadow: var(--shadow-hero);
+}
+
+.hero-wave {
+  position: absolute;
+  inset: auto -20% -40% -10%;
+  height: 70%;
+  background:
+    radial-gradient(ellipse at 30% 40%, rgba(255, 176, 46, 0.18), transparent 55%),
+    radial-gradient(ellipse at 70% 60%, rgba(255, 255, 255, 0.08), transparent 50%);
+  pointer-events: none;
+}
+
+.hero-wave::before,
+.hero-wave::after {
+  content: "";
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  height: 80px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.hero-wave::before { top: 10%; }
+.hero-wave::after { top: 38%; opacity: 0.6; }
+
+.more {
+  position: absolute;
+  right: 20px;
+  top: 22px;
+  border: 0;
+  background: transparent;
+  color: var(--on-dark);
+  font-size: 16px;
+  letter-spacing: 2px;
+  z-index: 1;
+}
+
+.card-label {
+  position: relative;
+  color: #c5c8cc;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+}
+
+.hero strong,
+.analytics-card strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -1.4px;
+}
+
+.hero #total-sub {
+  margin-top: 4px;
+  color: #b8bcc0;
+  font-size: 12px;
+}
+
+/* Sits on the hero card, which is dark in both themes, so these are fixed
+   light-on-dark rather than tokenised. */
+.hero-range {
+  position: relative;
+  display: inline-flex;
+  gap: 3px;
+  margin-top: 14px;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.hero-range button {
+  border: 0;
+  border-radius: 999px;
+  padding: 6px 13px;
+  background: transparent;
+  color: #c5c8cc;
+  font-size: 11.5px;
+  font-weight: 650;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color .22s ease, color .22s ease;
+}
+
+.hero-range button.active {
+  background: var(--on-dark);
+  color: var(--hero-to);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-range button { transition: none; }
+}
+
+.spend-meter {
+  display: flex;
+  gap: 3px;
+  width: 100%;
+  height: 5px;
+  margin-top: 28px;
+  border-radius: 99px;
+  background: #3a4047;
+  overflow: hidden;
+}
+
+.spend-meter i { width: 28%; background: #f23b4a; border-radius: 99px; }
+.spend-meter b { width: 16%; background: var(--orange); border-radius: 99px; }
+.spend-meter em { flex: 1; background: #343a40; }
+
+.card-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 28px;
+  color: #f0f0f0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.8px;
+}
+
+.card-date {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--soft);
+  letter-spacing: 0.2px;
+}
+
+.mark { display: flex; align-items: center; }
+.mark i {
+  display: block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ee3e32;
+}
+.mark i + i {
+  margin-left: -8px;
+  background: #f7af21;
+}
+
+/* —— Overview —— */
+.overview { margin-bottom: 26px; }
+.overview h2,
+.section-title h2 {
+  font-size: 18px;
+  font-weight: 750;
+  letter-spacing: -0.4px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 76px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+
+.stat-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.stat:first-child .stat-icon { background: var(--tint-green); color: var(--green); }
+.stat:last-child .stat-icon { background: var(--tint-amber); color: var(--amber-text); }
+
+.stat small {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.stat strong {
+  display: block;
+  margin-top: 3px;
+  font-size: 14px;
+  font-weight: 750;
+  letter-spacing: -0.3px;
+}
+
+.stat > div { flex: 1; min-width: 0; }
+
+.delta {
+  display: block;
+  margin-top: 3px;
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.delta.up { color: var(--green); }
+.delta.down { color: var(--danger); }
+.delta.flat { color: var(--muted); }
+
+/* —— Filters —— */
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0 0 22px;
+}
+
+.controls input {
+  width: 100%;
+  height: 48px;
+  border: 0;
+  border-radius: 14px;
+  padding: 0 16px;
+  background: var(--card);
+  color: var(--ink);
+  outline: none;
+  font-size: 16px;
+  box-shadow: var(--shadow);
+}
+
+.chips {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.chips button {
+  flex: 1;
+  height: 40px;
+  border: 0;
+  border-radius: 12px;
+  padding: 0 12px;
+  background: var(--chip);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.chips button.active {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* The theme chips carry an icon beside their label */
+.theme-toggle button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* Every surface animates together on a theme change, so the switch reads as
+   one movement instead of a dozen. Kept short: any longer and tapping the
+   toggle twice looks broken. */
+body, .app, .tab-panel, .controls input, .chips button, .filter-selects select,
+.tx, .stat, .hero, .bottom-nav, .nav-item, .nav-add, .profile-card, .add-form,
+.add-form input, .add-form select, .add-summary, .budget, .modal-card,
+.recurring-item, .profile-key, .profile-action, .save-expense, .date-label {
+  transition: background-color .22s ease, color .22s ease, border-color .22s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body, .app, .tab-panel, .controls input, .chips button, .filter-selects select,
+  .tx, .stat, .hero, .bottom-nav, .nav-item, .nav-add, .profile-card, .add-form,
+  .add-form input, .add-form select, .add-summary, .budget, .modal-card,
+  .recurring-item, .profile-key, .profile-action, .save-expense, .date-label {
+    transition: none;
+  }
+}
+
+.filter-selects {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.filter-selects select {
+  width: 100%;
+  height: 44px;
+  border: 0;
+  border-radius: 12px;
+  padding: 0 12px;
+  background: var(--chip);
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 650;
+  appearance: none;
+  outline: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236f737b' d='M1.4 0.6 6 5.2 10.6.6 12 2 6 8 0 2z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+
+/* —— Transactions —— */
+.section-title {
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.link {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.list, .preview-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.date-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.date-label {
+  margin: 2px 2px 0;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.tx {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto auto;
+  align-items: center;
+  column-gap: 12px;
+  min-height: 74px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+
+.tx.compact {
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  min-height: 68px;
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--subtle);
+  color: var(--ink);
+}
+
+/* Keyed to the category, not the row's position, so a category looks the
+   same wherever it appears. Every value is an existing token, so both themes
+   are covered without a second palette. */
+.icon.tone-green { background: var(--tint-green); color: var(--green); }
+.icon.tone-amber { background: var(--tint-amber); color: var(--amber-text); }
+.icon.tone-ink { background: var(--subtle); color: var(--ink); }
+
+/* Top spending reuses the same disc, one size down. */
+.top-item .icon {
+  width: 38px;
+  height: 38px;
+}
+
+
+.main {
+  min-width: 0;
+}
+
+.name {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 720;
+  letter-spacing: -0.2px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.desc, .meta {
+  overflow: hidden;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.amount {
+  justify-self: end;
+  font-size: 13px;
+  font-weight: 760;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.delete {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--soft);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.empty {
+  padding: 36px 18px;
+  border-radius: 18px;
+  background: var(--card);
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+
+/* —— Floating pill nav (matches image.png) —— */
+/* —— Floating Liquid-Glass bottom nav —— */
+.bottom-nav {
+  position: fixed;
+  z-index: 30;
+  left: 50%;
+  bottom: calc(14px + var(--safe-b));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: min(calc(100% - 32px), 402px);
+  height: 72px;
+  padding: 0 12px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  box-shadow: var(--shadow-nav);
+  transition: transform .5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  touch-action: pan-y;
+}
+
+.nav-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 60px;
+  height: 56px;
+  border: 0;
+  border-radius: 17px;
+  background: transparent;
+  color: var(--muted);
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    color .28s cubic-bezier(0.34, 1.56, 0.64, 1),
+    transform .28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.nav-label {
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: -0.1px;
+}
+
+/* The nav is hidden only while the on-screen keyboard is up, where it would
+   otherwise sit on top of the field being typed into. It used to be hidden
+   for the whole Add tab, which cost that tab its navigation. */
+body.keyboard-open .bottom-nav { display: none; }
+
+.nav-item.nav-active {
+  color: var(--ink);
+}
+
+.nav-item:active { transform: scale(0.92); }
+
+.nav-add {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin-top: -28px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--on-accent);
+  -webkit-tap-highlight-color: transparent;
+  /* neutral lift, not a coloured glow: the design's button reads as a solid
+     dark disc sitting above the pill */
+  box-shadow: var(--shadow-lift);
+  transition:
+    transform .3s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow .3s ease;
+}
+
+.nav-add.nav-active {
+  box-shadow: var(--shadow-lift-active);
+}
+
+.nav-add:active { transform: translateY(-2px) scale(0.94); }
+
+/* Springy icon pop when a tab becomes active */
+.nav-item.nav-active svg,
+.nav-add.nav-active svg {
+  animation: navPop .5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes navPop {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.3); }
+  70% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bottom-nav,
+  .nav-item,
+  .nav-add {
+    transition: none;
+  }
+  .nav-item.nav-active svg,
+  .nav-add.nav-active svg {
+    animation: none;
+  }
+}
+
+/* —— Analytics —— */
+.analytics-card {
+  margin-bottom: 28px;
+  padding: 24px 20px 20px;
+  border-radius: 28px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+
+.dark-label { color: var(--muted); }
+
+.analytics-card > strong { margin-bottom: 4px; }
+
+.analytics-range {
+  display: flex;
+  justify-content: space-between;
+  margin: 18px 0 8px;
+  padding: 5px;
+  border-radius: 14px;
+  background: var(--subtle);
+}
+
+.analytics-range button {
+  flex: 1;
+  border: 0;
+  border-radius: 11px;
+  padding: 9px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.analytics-range .range-active {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.chart-wrap {
+  height: 200px;
+  margin-top: 8px;
+}
+
+.chart-wrap svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.chart-tooltip {
+  font-size: 11px;
+  font-weight: 700;
+  fill: var(--on-accent);
+}
+
+.chart-value {
+  font-size: 9px;
+  font-weight: 700;
+  fill: var(--ink);
+}
+
+/* The chart is built as an SVG string in renderChart(), so its colours have
+   to live here rather than inline -- otherwise the line stays near-black and
+   vanishes against a dark page. */
+.chart-fill-stop { stop-color: var(--ink); }
+.chart-line { stroke: var(--ink); }
+.chart-guide { stroke: var(--soft); }
+.chart-dot { fill: var(--ink); }
+.chart-dot-core { fill: var(--card); }
+.chart-badge { fill: var(--accent); }
+.chart-axis { fill: var(--muted); }
+
+.analytics-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.top-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 18px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+
+/* The text block only. This used to be `.top-item div`, which also matched
+   the icon once it became a div -- flex: 1 gave the disc a zero basis and let
+   it grow, so it rendered 100px+ wide and a different width in every row. */
+.top-item > div:not(.icon) { flex: 1; min-width: 0; }
+.top-item strong, .top-item small { display: block; }
+.top-item strong { font-size: 13px; font-weight: 720; }
+.top-item small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.top-item b { font-size: 13px; font-weight: 750; }
+
+/* —— Add panel ——
+   Deliberately plain: it is a tab like any other, so it uses .page-head and
+   keeps the bottom nav. It used to centre a smaller title between a back
+   arrow and a spacer, which made the one screen people use most often the
+   only one that did not look like the app. */
+.add-form {
+  padding: 22px 18px 20px;
+  border-radius: 24px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+
+.add-form label {
+  display: block;
+  margin-top: 14px;
+  color: var(--label);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.add-form label:first-child { margin-top: 0; }
+
+.add-form input,
+.add-form select {
+  width: 100%;
+  height: 48px;
+  margin-top: 8px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 0 14px;
+  background: var(--field);
+  color: var(--ink);
+  outline: none;
+  font-size: 16px;
+}
+
+.add-form input:focus,
+.add-form select:focus {
+  border-color: var(--accent);
+  background: var(--field-focus);
+}
+
+.add-form input::placeholder { color: var(--soft); }
+
+.add-summary {
+  display: grid;
+  gap: 10px;
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--subtle);
+}
+
+.add-summary div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.add-summary span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.add-summary strong {
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.form-error {
+  min-height: 16px;
+  margin-top: 12px;
+  color: var(--danger);
+  font-size: 12px;
+}
+
+.save-expense,
+.profile-action {
+  width: 100%;
+  margin-top: 8px;
+  border: 0;
+  border-radius: 16px;
+  padding: 15px;
+  background: var(--card);
+  color: var(--ink);
+  font-weight: 800;
+  font-size: 15px;
+}
+
+/* Primary action. Same charcoal as .profile-action and the active filter
+   chip -- this was the last violet in the app, as a pair of literal hex
+   values rather than the token, which is how it outlived the token. */
+.save-expense {
+  background: var(--accent);
+  color: var(--on-accent);
+  box-shadow: var(--shadow-lift);
+}
+
+.save-expense:disabled { opacity: 0.55; }
+
+/* —— Profile —— */
+.profile {
+  text-align: center;
+  padding-top: 28px;
+}
+
+.profile-avatar-wrap {
+  position: relative;
+  width: 88px;
+  margin: 0 auto 14px;
+}
+
+.profile-avatar {
+  display: grid;
+  place-items: center;
+  width: 88px;
+  height: 88px;
+  border: 5px solid var(--card);
+  border-radius: 50%;
+  background: linear-gradient(145deg, var(--avatar-from), var(--avatar-to));
+  box-shadow: var(--shadow-lift);
+  overflow: hidden;
+  color: var(--on-dark);
+  font-size: 32px;
+  font-weight: 800;
+}
+
+.profile-avatar.has-photo {
+  background-color: var(--avatar-from);
+}
+
+.avatar-edit {
+  position: absolute;
+  right: -2px;
+  bottom: 2px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 3px solid var(--card);
+  border-radius: 50%;
+  background: var(--orange);
+  color: var(--hero-to);
+  box-shadow: var(--shadow);
+}
+
+.profile-avatar-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  min-height: 16px;
+}
+
+.avatar-row-sep { color: var(--muted); font-size: 12px; }
+
+.profile > h2 {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.profile > p {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.profile-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14px;
+  padding: 18px;
+  border-radius: 18px;
+  background: var(--card);
+  text-align: left;
+  box-shadow: var(--shadow);
+}
+
+.profile-card span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.profile-card strong {
+  font-size: 15px;
+  font-weight: 750;
+}
+
+.profile-action {
+  margin-top: 22px;
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.profile-key {
+  margin-top: 22px;
+  padding: 18px;
+  border-radius: 18px;
+  background: var(--card);
+  text-align: left;
+  box-shadow: var(--shadow);
+}
+
+.profile-key label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.profile-key-hint {
+  margin: 8px 0 12px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.profile-key-hint code {
+  font-size: 11px;
+  padding: 1px 5px;
+  border-radius: 6px;
+  background: var(--subtle);
+}
+
+.profile-key-input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 13px 14px;
+  background: var(--field);
+  color: var(--text);
+  outline: none;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+}
+
+.profile-key-input:focus {
+  border-color: var(--accent);
+  background: var(--field-focus);
+}
+
+.profile-key-status {
+  min-height: 18px;
+  margin: 10px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.profile-key-status.ok { color: var(--ok-text); }
+.profile-key-status.err { color: var(--err-text); }
+
+.profile-key-actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.profile-key-actions .profile-action {
+  margin-top: 0;
+}
+
+.profile-action-secondary {
+  background: var(--chip);
+  color: var(--ink);
+}
+
+@media (min-width: 700px) {
+  html { background: var(--frame); }
+
+  body {
+    padding: 28px 0;
+    background: var(--frame);
+  }
+
+  .app {
+    min-height: calc(100dvh - 56px);
+    border-radius: 36px;
+    box-shadow: var(--shadow-frame);
+    overflow: hidden;
+  }
+
+  .bottom-nav {
+    bottom: calc(40px + var(--safe-b));
+  }
+}
+
+/* —— Budget / monthly limit —— */
+.budget {
+  margin: -4px 0 26px;
+  padding: 18px 18px 16px;
+  border-radius: 22px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+
+.budget-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.budget-head h2 {
+  font-size: 16px;
+  font-weight: 750;
+  letter-spacing: -0.3px;
+}
+
+.budget-alert {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.budget-alert.warn {
+  background: var(--tint-amber);
+  color: var(--amber-ink);
+}
+
+.budget-alert.danger {
+  background: var(--tint-red);
+  color: var(--red-ink);
+}
+
+.budget-set-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.budget-remaining {
+  display: flex;
+  align-items: center;
+  /* Wraps rather than squeezing. The Spent column used to be a fixed 132px,
+     which left the remaining amount about 90px -- and a rupee total has no
+     spaces to wrap on, so it overflowed its box and painted over the column
+     beside it. 22px of overlap at 390px, 92px at 320px. */
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 4px;
+  padding: 14px;
+  border-radius: 16px;
+  background: var(--subtle);
+}
+
+.budget-remaining-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--subtle);
+  color: var(--ink);
+}
+
+/* A floor wide enough for a realistic total, so the two columns can no
+   longer both be squeezed onto one line at phone widths. */
+.budget-remaining-text {
+  flex: 1 1 auto;
+  min-width: 150px;
+}
+
+/* Last resort for an unusually large total: wrap inside the box rather than
+   spill out of it. Overlapping text is worse than a wrapped number. */
+.budget-remaining-text strong { overflow-wrap: anywhere; }
+
+.budget-remaining-text span {
+  display: block;
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.budget-remaining-text strong {
+  display: block;
+  margin-top: 3px;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+}
+
+.budget-remaining-spent {
+  /* Takes the rest of the row when it fits beside the amount, and the whole
+     of the next row when it does not. Laid out as a grid so that on its own
+     row it reads as a labelled figure -- "Spent" left, the total right, bar
+     across -- rather than a column of right-aligned fragments. */
+  flex: 1 1 132px;
+  min-width: 132px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: baseline;
+  column-gap: 8px;
+  text-align: right;
+}
+
+.budget-remaining-spent > span {
+  grid-column: 1;
+  text-align: left;
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.budget-remaining-spent strong {
+  grid-column: 2;
+  font-size: 13px;
+  font-weight: 750;
+  /* the one figure here that can get long */
+  overflow-wrap: anywhere;
+}
+
+.budget-remaining-spent .budget-track {
+  grid-column: 1 / -1;
+  margin: 6px 0 4px;
+}
+
+.budget-remaining-spent small {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.budget-bars {
+  display: flex;
+  flex-direction: column;
+}
+
+.budget-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+}
+
+.budget-row + .budget-row { border-top: 1px solid var(--line); }
+
+.budget-row-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+
+.budget-row-icon.green { background: var(--tint-green); color: var(--green); }
+.budget-row-icon.orange { background: var(--tint-amber); color: var(--amber-text); }
+.budget-row-icon.ink { background: var(--subtle); color: var(--ink); }
+
+.budget-row-main { flex: 1; min-width: 0; }
+
+.budget-row-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.budget-row-right { flex-shrink: 0; text-align: right; }
+
+.budget-row-amt {
+  display: block;
+  font-size: 12px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.budget-row-amt small { color: var(--muted); font-weight: 600; }
+
+.budget-row-rem {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.budget-chevron { flex-shrink: 0; color: var(--soft); }
+
+.budget-track {
+  height: 7px;
+  border-radius: 99px;
+  background: var(--chip);
+  overflow: hidden;
+}
+
+.budget-track i {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #34d399, #22c55e);
+  transition: width .3s ease;
+}
+
+.budget-track.over {
+  background: var(--tint-red);
+}
+
+.budget-track.over i {
+  background: var(--danger);
+}
+
+
+/* —— Limit modal —— */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+}
+
+.modal[hidden] { display: none; }
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: var(--backdrop);
+}
+
+.modal-card {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  padding: 24px 20px 20px;
+  border-radius: 24px;
+  background: var(--card);
+  box-shadow: var(--shadow-modal);
+  animation: fadeIn .2s ease;
+}
+
+.modal-card h3 {
+  margin: 0 0 6px;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+}
+
+.modal-hint {
+  margin: 0 0 16px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.limit-periods {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.limit-period {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--subtle);
+  font-size: 13px;
+}
+
+.limit-period span { color: var(--label); font-weight: 600; }
+.limit-period strong { color: var(--ink); }
+
+.limit-period-muted {
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--subtle);
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.limit-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--label);
+}
+
+.limit-input {
+  width: 100%;
+  margin-top: 8px;
+  padding: 14px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--field);
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.limit-input:focus {
+  outline: none;
+  border-color: var(--orange);
+  background: var(--field-focus);
+}
+
+.limit-actions {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.limit-actions .profile-action {
+  margin: 0;
+}
+
+.limit-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--chip);
+  color: var(--label);
+  font-size: 13px;
+}
+
+/* —— Recurring expenses —— */
+.profile-card-button {
+  width: 100%;
+  gap: 10px;
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.profile-card-button svg {
+  color: var(--muted);
+  flex: none;
+}
+
+.profile-card-button:active {
+  transform: scale(0.99);
+}
+
+.repeat-hint {
+  margin: -6px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.modal-hint-quiet {
+  margin: 14px 0 0;
+  font-size: 11.5px;
+  opacity: 0.8;
+}
+
+.recurring-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  /* a long list scrolls inside the card rather than pushing it off-screen */
+  max-height: 46vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.recurring-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--subtle);
+  text-align: left;
+}
+
+.recurring-item.paused {
+  opacity: 0.62;
+}
+
+.recurring-item-name {
+  font-size: 13.5px;
+  font-weight: 750;
+  letter-spacing: -0.2px;
+}
+
+.recurring-item-amt {
+  font-size: 13.5px;
+  font-weight: 800;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.recurring-item-meta {
+  grid-column: 1 / -1;
+  font-size: 11.5px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.recurring-item-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.recurring-item-actions button {
+  flex: 1;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--chip);
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.recurring-item-actions button:active {
+  transform: scale(0.98);
+}
+
+.recurring-item-actions .danger {
+  background: var(--tint-red);
+  color: var(--danger);
+}
+
+/* the ↻ marker on an expense a rule generated */
+.tx-repeat {
+  display: inline-block;
+  margin-left: 4px;
+  font-weight: 700;
+  opacity: 0.75;
+}
+
+
+/* —— Pull to refresh ——
+   The browser's own is disabled (overscroll-behavior: none on body, so the
+   page never rubber-bands), so this is the whole gesture: the content moves
+   down with your finger and a disc rides in the gap it opens. */
+.pull-refresh {
+  position: fixed;
+  top: calc(6px + var(--safe-t));
+  left: 50%;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--card);
+  color: var(--muted);
+  box-shadow: var(--shadow-nav);
+  opacity: 0;
+  pointer-events: none;
+  /* At rest it sits exactly one disc above the content edge, which is where
+     a pull of zero puts it -- so the first frame moves rather than jumps. */
+  transform: translate(-50%, -44px) scale(0.7);
+}
+
+.pull-refresh svg {
+  /* Turned by the gesture, a half turn by the time it is ready to release. */
+  transform: rotate(var(--pull-turn, 0deg));
+}
+
+/* Past the threshold: the icon has turned, the disc firms up, and the colour
+   switches to the accent. That change is the "let go now" signal. */
+.pull-refresh.ready {
+  color: var(--ink);
+  box-shadow: var(--shadow-lift);
+}
+
+/* While the finger is down both pieces are positioned inline, frame by frame,
+   so the transition has to be off or it lags behind the drag. It is switched
+   on only for the spring back and the settle into the reload. */
+.pull-refresh.settling,
+.app.settling {
+  transition: transform .42s cubic-bezier(0.22, 1.2, 0.36, 1);
+}
+
+.pull-refresh.settling {
+  transition: transform .42s cubic-bezier(0.22, 1.2, 0.36, 1), opacity .3s ease;
+}
+
+.pull-refresh.spinning {
+  color: var(--ink);
+}
+
+.pull-refresh.spinning svg {
+  animation: spin .7s linear infinite;
+  transform: none;  /* the gesture's angle hands over to the animation */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pull-refresh.settling,
+  .app.settling { transition: opacity .2s ease; }
+  .pull-refresh.spinning svg { animation: none; }
+}

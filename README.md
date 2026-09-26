@@ -34,20 +34,3 @@ chrome, and starts with no network.
 icons. `public/sw.js` precaches the app shell (filled in at build time by the
 `pwa-precache` Vite plugin in `vite.config.js`), so a launch with no network
 still renders.
-
-## Android app (Capacitor)
-
-`android/` is a generated Capacitor project wrapping this same HTML/CSS/JS in
-a WebView shell:
-
-```bash
-npm run build
-npx cap sync android
-cd android && ./gradlew assembleDebug   # -> app/build/outputs/apk/debug/app-debug.apk
-```
-
-Requires JDK 21+. The API origin serving this app (`https://localhost` inside
-the WebView) must be added to `CORS_ORIGINS` on the API deployment.
-
-Launcher icons/splash screens are generated from `resources/icon.png` with
-`npx capacitor-assets generate --android`.

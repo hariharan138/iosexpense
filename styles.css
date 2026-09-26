@@ -706,10 +706,11 @@ body, .app, .tab-panel, .controls input, .chips button, .filter-selects select,
   bottom: calc(14px + var(--safe-b));
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  width: min(calc(100% - 32px), 402px);
+  justify-content: center;
+  gap: 2px;
+  width: min(calc(100% - 32px), 430px);
   height: 72px;
-  padding: 0 12px;
+  padding: 0 8px;
   transform: translateX(-50%);
   border-radius: 999px;
   border: 1px solid var(--line);
@@ -722,11 +723,12 @@ body, .app, .tab-panel, .controls input, .chips button, .filter-selects select,
 .nav-item {
   position: relative;
   display: flex;
+  flex: 1 1 0;
+  min-width: 0;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 3px;
-  width: 60px;
   height: 56px;
   border: 0;
   border-radius: 17px;
@@ -739,6 +741,10 @@ body, .app, .tab-panel, .controls input, .chips button, .filter-selects select,
 }
 
 .nav-label {
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   font-size: 10px;
   font-weight: 650;
   letter-spacing: -0.1px;
@@ -1716,6 +1722,227 @@ body.keyboard-open .bottom-nav { display: none; }
   animation: spin .7s linear infinite;
   transform: none;  /* the gesture's angle hands over to the animation */
 }
+
+/* —— Notes —— */
+.note-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 12px;
+  width: 100%;
+  min-height: 74px;
+  padding: 14px;
+  margin-bottom: 10px;
+  border-radius: 18px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  text-align: left;
+  color: inherit;
+}
+
+.note-card:active { transform: scale(0.98); }
+
+.note-card-title {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.note-card-meta {
+  margin: 3px 0 0;
+  font-size: 12.5px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.note-card-meta b { color: var(--label); font-weight: 600; }
+
+.note-card-thumb {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: var(--subtle);
+}
+
+.note-fab {
+  position: fixed;
+  z-index: 25;
+  right: max(22px, calc(50% - 215px + 22px));
+  bottom: calc(var(--nav-h) + 30px + var(--safe-b));
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--on-accent);
+  box-shadow: var(--shadow-lift);
+}
+
+.note-fab:active { transform: scale(0.92); }
+
+/* The editor is a full-screen overlay pushed on top of the current tab, not
+   a tab itself -- there is no nav button for it, so the bottom nav is hidden
+   for as long as it's open (see body.note-editor-open below) rather than
+   trying to show a "which tab is this" state that doesn't apply. */
+.note-editor {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+}
+
+/* `.note-editor` and `[hidden]` are equal specificity, and this stylesheet
+   loads after the UA one -- without this, display:flex above always wins and
+   the "hidden" overlay still intercepts every tap underneath it. */
+.note-editor[hidden] { display: none; }
+
+body.note-editor-open .bottom-nav,
+body.note-editor-open .note-fab { display: none; }
+
+.note-editor-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: none;
+  gap: 10px;
+  padding: calc(12px + var(--safe-t)) 14px 10px;
+}
+
+.note-editor-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.note-editor-back:active { opacity: 0.6; }
+
+.note-save-status {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.note-editor-icon-btn {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--danger);
+}
+
+.note-editor-icon-btn:active { background: var(--subtle); }
+
+.note-editor-scroll {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 4px 20px 24px;
+}
+
+.note-editor-date {
+  margin: 0 0 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.note-editor-text {
+  display: block;
+  width: 100%;
+  min-height: 40px;
+  border: 0;
+  outline: none;
+  resize: none;
+  overflow: hidden;
+  background: transparent;
+  color: var(--ink);
+  font-size: 16.5px;
+  line-height: 1.5;
+}
+
+.note-editor-text::placeholder { color: var(--soft); }
+
+.note-editor-images {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.note-editor-images:empty { display: none; }
+
+.note-image {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--subtle);
+}
+
+.note-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.note-image-remove {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(20, 20, 22, 0.55);
+  color: #fff;
+  backdrop-filter: blur(4px);
+}
+
+.note-editor-toolbar {
+  display: flex;
+  align-items: center;
+  flex: none;
+  gap: 6px;
+  padding: 8px 14px calc(10px + var(--safe-b));
+  border-top: 1px solid var(--line);
+  background: var(--card);
+}
+
+.note-toolbar-btn {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink);
+}
+
+.note-toolbar-btn:active { background: var(--subtle); }
 
 @media (prefers-reduced-motion: reduce) {
   .pull-refresh.settling,

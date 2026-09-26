@@ -156,6 +156,9 @@ let monthlyLimit = null;
 let avatarData = null;
 let account = null;   // { username, api_key } once signed in with a password
 let recurring = [];
+let notes = [];        // list summaries: {id, title, preview, thumbnail, image_count, updated_at}
+let currentNote = null; // {id, text, images, createdAt} while the editor is open, else null
+const MAX_NOTE_IMAGES = 6;
 // Which credential the once-per-login side data (identity, limit, avatar,
 // recurring rules) was loaded for. Keeps that data off the 15s poll.
 let sideDataKey = null;
@@ -829,6 +832,235 @@ async function removeAvatarPhoto() {
   }
 }
 
+/* —— Notes ——
+ * A note is text plus up to MAX_NOTE_IMAGES photos, stored on the API as one
+ * Mongo document (see Money-Tracker's app/routes/notes.py). The list only
+ * ever holds lightweight summaries -- title, preview, one thumbnail -- so
+ * opening the tab never re-downloads every photo on every note; the full
+ * `images` array is fetched only when a specific note is opened. */
+
+function noteDateLabel(iso) {
+  const d = new Date(iso || '');
+  if (Number.isNaN(d.getTime())) return '';
+  const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return `${formatDayLabel(dayKey(d))} ${time}`;
+}
+
+/** Mirrors the API's own title/preview split (routes/notes.py:_title_and_preview)
+ *  so a just-saved note updates in the list without a round trip to re-fetch it. */
+function summarizeNote(note) {
+  const lines = note.text.split('\n').map(line => line.trim()).filter(Boolean);
+  return {
+    id: note.id,
+    title: lines[0] ? lines[0].slice(0, 80) : 'New Note',
+    preview: lines.slice(1).join(' ').slice(0, 140),
+    image_count: note.images.length,
+    thumbnail: note.images[0] || null,
+    created_at: note.created_at,
+    updated_at: note.updated_at,
+  };
+}
+
+function upsertNoteSummary(note) {
+  const summary = summarizeNote(note);
+  const index = notes.findIndex(item => item.id === summary.id);
+  if (index === -1) notes.unshift(summary);
+  else notes[index] = summary;
+  notes.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+}
+
+function noteCardHtml(note) {
+  const thumb = note.thumbnail ? `<img class="note-card-thumb" src="${note.thumbnail}" alt="">` : '';
+  const preview = note.preview ? ` — ${escapeHtml(note.preview)}` : '';
+  return `<button class="note-card" type="button" data-note-open="${note.id}">
+    <div>
+      <span class="note-card-title">${escapeHtml(note.title)}</span>
+      <p class="note-card-meta"><b>${noteDateLabel(note.updated_at)}</b>${preview}</p>
+    </div>
+    ${thumb}
+  </button>`;
+}
+
+function renderNotesList() {
+  const query = ($('#noteSearch')?.value || '').trim().toLowerCase();
+  const visible = query
+    ? notes.filter(note => `${note.title} ${note.preview}`.toLowerCase().includes(query))
+    : notes;
+  $('#notesCount').textContent = `${notes.length} note${notes.length === 1 ? '' : 's'}`;
+  $('#notesList').innerHTML = visible.map(noteCardHtml).join('')
+    || `<div class="empty">${query ? 'No matching notes.' : 'No notes yet. Tap + to add one.'}</div>`;
+}
+
+async function loadNotes() {
+  if (!KEY) return;
+  try {
+    const response = await apiFetch('/api/notes', authed({ cache: 'no-store' }));
+    if (!response.ok) throw new Error(`API returned ${response.status}`);
+    notes = (await response.json()).notes || [];
+    renderNotesList();
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+function renderNoteImages() {
+  $('#noteImages').innerHTML = currentNote.images.map((src, index) => `
+    <div class="note-image">
+      <img src="${src}" alt="">
+      <button class="note-image-remove" type="button" data-remove-image="${index}" aria-label="Remove photo">✕</button>
+    </div>`).join('');
+}
+
+function autoGrowTextarea(el) {
+  el.style.height = 'auto';
+  el.style.height = `${el.scrollHeight}px`;
+}
+
+async function openNoteEditor(id) {
+  if (id) {
+    try {
+      const response = await apiFetch(`/api/notes/${encodeURIComponent(id)}`, authed({ cache: 'no-store' }));
+      if (!response.ok) throw new Error('Could not open this note');
+      const { note } = await response.json();
+      currentNote = { id: note.id, text: note.text, images: note.images, createdAt: note.created_at };
+    } catch (error) {
+      console.error(error);
+      alert('Could not open this note. Try again.');
+      return;
+    }
+  } else {
+    currentNote = { id: null, text: '', images: [], createdAt: new Date().toISOString() };
+  }
+  $('#noteText').value = currentNote.text;
+  renderNoteImages();
+  $('#noteEditorDate').textContent = noteDateLabel(currentNote.createdAt);
+  $('#noteDelete').hidden = !currentNote.id;
+  $('#noteSaveStatus').textContent = '';
+  document.body.classList.add('note-editor-open');
+  $('#noteEditor').hidden = false;
+  autoGrowTextarea($('#noteText'));
+  setTimeout(() => { $('#noteText').focus(); autoGrowTextarea($('#noteText')); }, 120);
+}
+
+/** Saves on the way out, the way iOS Notes does: a note with nothing in it
+ *  (no text, no photo) is discarded instead of left behind as a blank row. */
+async function persistCurrentNote() {
+  if (!currentNote) return;
+  const text = $('#noteText').value.trim();
+  const { id, images } = currentNote;
+  if (!text && images.length === 0) {
+    if (id) {
+      try {
+        await apiFetch(`/api/notes/${encodeURIComponent(id)}`, authed({ method: 'DELETE' }));
+      } catch (error) {
+        console.warn(error);
+      }
+      notes = notes.filter(note => note.id !== id);
+    }
+    currentNote.id = null;
+    return;
+  }
+  $('#noteSaveStatus').textContent = 'Saving…';
+  try {
+    const body = JSON.stringify({ text, images });
+    const response = id
+      ? await apiFetch(`/api/notes/${encodeURIComponent(id)}`, authed({ method: 'PUT', headers: { 'Content-Type': 'application/json' }, body }))
+      : await apiFetch('/api/notes', authed({ method: 'POST', headers: { 'Content-Type': 'application/json' }, body }));
+    if (!response.ok) throw new Error('Could not save this note');
+    const { note } = await response.json();
+    currentNote.id = note.id;
+    currentNote.text = note.text;
+    upsertNoteSummary(note);
+    $('#noteSaveStatus').textContent = 'Saved';
+  } catch (error) {
+    console.error(error);
+    $('#noteSaveStatus').textContent = 'Could not save';
+  }
+}
+
+async function closeNoteEditor() {
+  await persistCurrentNote();
+  document.body.classList.remove('note-editor-open');
+  $('#noteEditor').hidden = true;
+  currentNote = null;
+  renderNotesList();
+}
+
+async function deleteCurrentNote() {
+  if (!currentNote?.id) return;
+  if (!confirm('Delete this note?')) return;
+  try {
+    const response = await apiFetch(`/api/notes/${encodeURIComponent(currentNote.id)}`, authed({ method: 'DELETE' }));
+    if (!response.ok && response.status !== 404) throw new Error('Could not delete this note');
+    notes = notes.filter(note => note.id !== currentNote.id);
+    currentNote.id = null;
+    document.body.classList.remove('note-editor-open');
+    $('#noteEditor').hidden = true;
+    currentNote = null;
+    renderNotesList();
+  } catch (error) {
+    console.error(error);
+    alert('Could not delete this note. Try again.');
+  }
+}
+
+/** Downscale a picked photo to a max-1440px JPEG data URL -- sharp enough
+ *  full-screen, small enough that several still fit in one Mongo document
+ *  alongside the note's text (see MAX_NOTE_IMAGE_CHARS server-side). */
+function fileToNoteImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Could not read image'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('That file is not a valid image'));
+      img.onload = () => {
+        const MAX = 1440;
+        const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+        const w = Math.max(1, Math.round(img.width * scale));
+        const h = Math.max(1, Math.round(img.height * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.82));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function attachNoteImages(fileList) {
+  if (!currentNote) return;
+  const room = Math.max(0, MAX_NOTE_IMAGES - currentNote.images.length);
+  if (!room) {
+    alert(`A note can hold up to ${MAX_NOTE_IMAGES} photos.`);
+    return;
+  }
+  for (const file of [...fileList].slice(0, room)) {
+    if (file.size > 15 * 1024 * 1024) {
+      alert(`${file.name} is too large. Pick a photo under 15 MB.`);
+      continue;
+    }
+    try {
+      currentNote.images.push(await fileToNoteImage(file));
+    } catch (error) {
+      console.error(error);
+      alert('Could not add that photo. Try again.');
+    }
+  }
+  renderNoteImages();
+  await persistCurrentNote();
+}
+
+async function removeNoteImage(index) {
+  if (!currentNote) return;
+  currentNote.images.splice(index, 1);
+  renderNoteImages();
+  await persistCurrentNote();
+}
+
 /** Key goes in a header, never the query string: ?key= lands in server logs
  *  on every poll, forever. The backend accepts both. */
 function authed(init = {}) {
@@ -1166,6 +1398,7 @@ async function load({ quiet = false } = {}) {
       loadLimit();
       loadProfile();
       loadRecurring();
+      loadNotes();
     }
     return true;
   } catch (error) {
@@ -1200,6 +1433,7 @@ function clearApiKey() {
   monthlyLimit = null;
   avatarData = null;
   recurring = [];
+  notes = [];
   sideDataKey = null;
   writeStoredApiKey('');
   $('#apiKeyInput').value = '';
@@ -1508,7 +1742,7 @@ document.addEventListener('touchend', endPull);
 document.addEventListener('touchcancel', endPull);
 
 /* —— Liquid-glass navbar: springy horizontal swipe / drag —— */
-const NAV_TABS = ['dashboard', 'transactions', 'add', 'analytics', 'profile'];
+const NAV_TABS = ['dashboard', 'transactions', 'notes', 'add', 'analytics', 'profile'];
 const nav = $('.bottom-nav');
 const SWIPE_THRESHOLD = 60;
 // Movement needed before the gesture commits to an axis. Below this a touch is
@@ -1700,6 +1934,33 @@ $('#avatarInput').onchange = event => {
   event.target.value = '';
 };
 $('#removeAvatar').onclick = removeAvatarPhoto;
+
+$('#noteSearch').oninput = renderNotesList;
+$('#notesList').onclick = event => {
+  const button = event.target.closest('[data-note-open]');
+  if (button) openNoteEditor(button.dataset.noteOpen);
+};
+$('#noteCompose').onclick = () => {
+  if (!KEY) {
+    showTab('profile');
+    syncProfileKeyUi('Save your API key first', 'err');
+    return;
+  }
+  openNoteEditor(null);
+};
+$('#noteBack').onclick = closeNoteEditor;
+$('#noteDelete').onclick = deleteCurrentNote;
+$('#noteText').addEventListener('input', () => autoGrowTextarea($('#noteText')));
+$('#noteAttach').onclick = () => $('#noteImageInput').click();
+$('#noteImageInput').onchange = event => {
+  const files = event.target.files;
+  if (files && files.length) attachNoteImages(files);
+  event.target.value = '';
+};
+$('#noteImages').onclick = event => {
+  const button = event.target.closest('[data-remove-image]');
+  if (button) removeNoteImage(Number(button.dataset.removeImage));
+};
 $('#loginBtn').onclick = () => doAuth('login');
 $('#registerBtn').onclick = () => doAuth('register');
 $('#logoutBtn').onclick = logout;
